@@ -1,0 +1,13 @@
+name: mlflow-demo
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - pandas
+  - scikit-learn
+  - pyspark
+  - pip
+  - pip:
+    - mlflow
+    - hyperopt
+    - koalas
