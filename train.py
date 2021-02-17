@@ -50,13 +50,13 @@ if __name__=="__main__":
                         help='Ratio of the test data')
     parser.add_argument('--num_evals', type=int,
                         help='Number of models we want to evaluate')
+    parser.add_argument('--use_hyperopt', dest='use_hyperopt', action='store_true')
                           
     args = parser.parse_args()
 
     # Track on MLflow managed by Databricks
     mlflow.set_tracking_uri("databricks")
 
-    trials = SparkTrials(6)
 
     with mlflow.start_run() as run:
         # Parameters
@@ -64,6 +64,7 @@ if __name__=="__main__":
         random_state=args.random_state
         test_size=args.test_size
         num_evals = args.num_evals
+        hyperopt = args.use_hyperopt
 
         # Load red wine data 
         if data_path.split(".")[-1]=="csv":
@@ -83,24 +84,33 @@ if __name__=="__main__":
                                                             random_state=random_state, 
                                                             stratify=y)
         # todo: log data
-        
-        # Declare hyperparameters to tune
-        param_space= {
-            "max_depth": hp.randint("max_depth", 2, 10),
-            "max_features": hp.randint("max_features", 2, 10)
-        }
-        
-        # Tune model using Hyperopt
-        best = fmin(objective,
-            space=param_space,
-            algo=tpe.suggest,
-            max_evals=num_evals,
-            trials=trials)
 
-        print(SparkTrials.results)
+        default_max_depth = 4
+        default_max_features = 6
 
-        best_max_depth = best["max_depth"]
-        best_max_features = best["max_features"]
+        if use_hyperopt:
+            trials = SparkTrials(6)
+        
+            # Declare hyperparameters to tune
+            param_space= {
+                "max_depth": hp.randint("max_depth", 2, 10),
+                "max_features": hp.randint("max_features", 2, 10)
+            }
+            
+            # Tune model using Hyperopt
+            best = fmin(objective,
+                space=param_space,
+                algo=tpe.suggest,
+                max_evals=num_evals,
+                trials=trials)
+
+            print(SparkTrials.results)
+
+            best_max_depth = best["max_depth"]
+            best_max_features = best["max_features"]
+        else:
+            best_max_depth = default_max_depth
+            best_max_features = default_max_features
 
         # Train model on entire training data
         pipeline = Pipeline([
