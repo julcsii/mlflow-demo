@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-import databricks.koalas as ks
 import argparse
 import mlflow
- 
+
+from pyspark.sql import SparkSession
+
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
@@ -12,6 +13,19 @@ from sklearn.pipeline import Pipeline
 
 from hyperopt import hp, tpe, fmin, SparkTrials, STATUS_OK
  
+
+def create_spark_session():
+    spark = SparkSession \
+        .builder \
+        .appName("MLflow demo app") \
+        .config("spark.jars.packages", "io.delta:delta-core_2.11:0.5.0") \
+        .config("spark.driver.extraJavaOptions", "-Duser.timezone=UTC") \
+        .config("spark.executor.extraJavaOptions", "-Duser.timezone=UTC") \
+        .config("spark.sql.session.timeZone", "UTC") \
+        .config("spark.driver.host", "localhost") \
+        .getOrCreate()
+    return spark
+
 
 def objective(space):
     pipeline = Pipeline([
@@ -52,8 +66,9 @@ if __name__=="__main__":
         if data_path.split(".")[-1]=="csv":
             data = pd.read_csv(data_path, sep=';')
         elif data_path.split(".")[-1]=="delta":
-            data_ks = ks.read_delta(data_path)
-            data = data_ks.to_pandas()
+            spark = create_spark_session()
+            df = spark.read.format("delta").load(data_path)
+            data = df.toPandas()
         else:
             print("Only CSV or Delta files are supported")
         
