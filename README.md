@@ -34,7 +34,5 @@ mlflow run . -e train --experiment-id 2712754460055773 -P data_file=data/winequa
 
 On Databicks
 ```
-mlflow run https://github.com/julcsii/mlflow-demo.git -b databricks --backend-config new_cluster_spec.json -P data_file=/delta/winequality.delta
+mlflow run https://github.com/julcsii/mlflow-demo.git -e train --experiment-id 2712754460055773 -b databricks --backend-config new_cluster_spec.json -P data_file=/delta/winequality.delta
 ```
-
-On Azure ML - todo
