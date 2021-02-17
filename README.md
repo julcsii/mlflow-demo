@@ -35,11 +35,8 @@ mlflow run . -e train --experiment-id 2712754460055773 -P data_file=data/winequa
 
 On Databicks
 
-Make sure to have any additional dependencies on the dbfs (that is not in your specified runtime):
-```
-dbfs cp /Users/juhe/Code/hyperopt/dist/hyperopt-0.2.5-py2.py3-none-any.whl dbfs:/FileStore/wheels/hyperopt-0.2.5-py2.py3-none-any.whl
-```
+Make sure to have any additional dependencies on the dbfs (that is not in your specified runtime).
 
 ```
-mlflow run https://github.com/julcsii/mlflow-demo.git -e train --experiment-id 2712754460055773 -b databricks --backend-config new_cluster_spec.json -P data_file=/delta/winequality.delta
+mlflow run https://github.com/julcsii/mlflow-demo.git -e train --experiment-id 2712754460055773 -b databricks --backend-config new_cluster_spec.json -P data_file=dbfs:/FileStore/tables/winequality.delta
 ```
