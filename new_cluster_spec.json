@@ -1,5 +1,17 @@
 {
     "spark_version": "7.3.x-scala2.12",
     "num_workers": 2,
-    "node_type_id": "Standard_DS3_v2"
+    "node_type_id": "Standard_DS3_v2",
+    "libraries": [
+      {
+        "pypi": {
+          "package": "hyperopt"
+        }
+      },
+      {
+        "pypi": {
+           "package": "dbfs:/FileStore/wheels/hyperopt-0.2.5-py2.py3-none-any.whl"
+        }
+      }
+    ]
   }
