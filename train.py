@@ -7,7 +7,7 @@ import mlflow
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 
 from hyperopt import hp, tpe, fmin, SparkTrials, STATUS_OK
@@ -19,28 +19,27 @@ def objective(space):
             ('rf', RandomForestRegressor(**space, random_state=random_state))
     ])
     pipeline.fit(X_train, y_train)
-    y_pred = pipeline.predict(X_test)
-    mse = mean_squared_error(y_test,y_pred)
-    rmse = np.sqrt(mse)
-    
-    return {'loss': rmse, 'status': STATUS_OK}
+    r2 = np.mean(cross_val_score(pipeline, X_train, y_train, cv=3))
+    return {'loss': -r2, 'status': STATUS_OK}
 
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Train and tune RandomForestRegressor to predict red wine quality.')
-    parser.add_argument('data_path', type=str,
+    parser.add_argument('--data_path', type=str,
                         help='Path to data. CSV or delta.')
-    parser.add_argument('random_state', type=int,
+    parser.add_argument('--random_state', type=int,
                         help='Random seed')
-    parser.add_argument('test_size', type=float,
+    parser.add_argument('--test_size', type=float,
                         help='Ratio of the test data')
-    parser.add_argument('num_evals', type=int,
+    parser.add_argument('--num_evals', type=int,
                         help='Number of models we want to evaluate')
                           
     args = parser.parse_args()
 
     # Track on MLflow managed by Databricks
     mlflow.set_tracking_uri("databricks")
+
+    trials = SparkTrials(6)
 
     with mlflow.start_run() as run:
         # Parameters
@@ -52,7 +51,7 @@ if __name__=="__main__":
         # Load red wine data 
         if data_path.split(".")[-1]=="csv":
             data = pd.read_csv(data_path, sep=';')
-        if data_path.split(".")[-1]=="delta":
+        elif data_path.split(".")[-1]=="delta":
             data_ks = ks.read_delta(data_path)
             data = data_ks.to_pandas()
         else:
@@ -70,18 +69,16 @@ if __name__=="__main__":
         # Declare hyperparameters to tune
         param_space= {
             "max_depth": hp.randint("max_depth", 2, 10),
-            "max_features": hp.choice("max_features", ["auto", "sqrt", "log2"])
+            "max_features": hp.randint("max_features", 2, 10)
         }
         
         # Tune model using Hyperopt
-        trials = SparkTrials()
         best = fmin(objective,
             space=param_space,
             algo=tpe.suggest,
             max_evals=num_evals,
             trials=trials)
 
-        print(best)
         print(SparkTrials.results)
 
         best_max_depth = best["max_depth"]
@@ -103,11 +100,10 @@ if __name__=="__main__":
         mlflow.log_metric("loss", r2)
 
         # Log shap explanations
-        mlflow.shap.log_explanation(pipeline.predict_proba, X)
+        mlflow.shap.log_explanation(pipeline.predict, X_train)
 
+        # Infer signature
         signature = mlflow.models.infer_signature(X_train, pipeline.predict(X_train))
-
-        #todo: add input examples
 
         # Register model
         mlflow.sklearn.log_model(
@@ -115,4 +111,5 @@ if __name__=="__main__":
             artifact_path="red_wine_quality", 
             registered_model_name="red_wine_quality-sklearn_RandomForestRegression_hyperopt",
             signature=signature)
+        #todo: add input examples
 
