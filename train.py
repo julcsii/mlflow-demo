@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 
 from hyperopt import hp, tpe, fmin, SparkTrials, STATUS_OK
@@ -33,8 +33,11 @@ def objective(space):
             ('rf', RandomForestRegressor(**space, random_state=random_state))
     ])
     pipeline.fit(X_train, y_train)
-    r2 = np.mean(cross_val_score(pipeline, X_train, y_train, cv=3))
-    return {'loss': -r2, 'status': STATUS_OK}
+    y_pred = pipeline.predict(X_test)
+    mse = mean_squared_error(y_test,y_pred)
+    rmse = np.sqrt(mse)
+    
+    return {'loss': rmse, 'status': STATUS_OK}
 
 
 if __name__=="__main__":
