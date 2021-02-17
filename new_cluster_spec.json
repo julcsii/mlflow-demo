@@ -10,7 +10,7 @@
       },
       {
         "pypi": {
-           "package": "dbfs:/FileStore/wheels/hyperopt-0.2.5-py2.py3-none-any.whl"
+           "package": "/FileStore/wheels/hyperopt-0.2.5-py2.py3-none-any.whl"
         }
       }
     ]
