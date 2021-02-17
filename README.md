@@ -18,6 +18,13 @@ export DATABRICKS_HOST="..."
 export DATABRICKS_TOKEN="..."
 ```
 
+## Use case
+
+Data: [Red wine quality](https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/)
+
+ML Task: Random Forest based Regression to predict the quality of red wine given some attributes.
+
+
 ## Run training 
 
 Locally
