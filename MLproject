@@ -9,7 +9,6 @@ entry_points:
       random_state: {type: int, default: 42}
       test_size: {type: float, default: 0.2}
       num_evals: {type: int, default: 8}
-      use_hyperopt: {type: boolean, default: True}
     command: "python train.py --data_path {data_file} --random_state {random_state} --test_size {test_size} --num_evals {num_evals}"
   tune:
     parameters:
