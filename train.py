@@ -7,9 +7,10 @@ from pyspark.sql import SparkSession
 
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
 
 from hyperopt import hp, tpe, fmin, SparkTrials, STATUS_OK
  
@@ -30,14 +31,12 @@ def create_spark_session():
 def objective(space):
     pipeline = Pipeline([
             ('scaler', preprocessing.StandardScaler()), 
-            ('rf', RandomForestRegressor(**space, random_state=random_state))
+            ('rf', RandomForestClassifier(**space, random_state=random_state, n_jobs=8))
     ])
     pipeline.fit(X_train, y_train)
-    y_pred = pipeline.predict(X_test)
-    mse = mean_squared_error(y_test,y_pred)
-    rmse = np.sqrt(mse)
+    score = cross_val_score(pipeline, X_train, y_train).mean()
     
-    return {'loss': rmse, 'status': STATUS_OK}
+    return {'loss': -score, 'status': STATUS_OK}
 
 
 if __name__=="__main__":
@@ -84,18 +83,21 @@ if __name__=="__main__":
                                                             random_state=random_state, 
                                                             stratify=y)
         # todo: log data
-
+        default_n_estimators = 10
         default_max_depth = 4
         default_max_features = 6
+        default_criterion = "gini"
 
-        if use_hyperopt:
+        if hyperopt:
+            print("Hyper parameter tuning with Hyperopt..")
             trials = SparkTrials(6)
         
             # Declare hyperparameters to tune
-            param_space= {
-                "max_depth": hp.randint("max_depth", 2, 10),
-                "max_features": hp.randint("max_features", 2, 10)
-            }
+            param_space = {
+                'max_depth': hp.choice('max_depth', range(1,20)),
+                'max_features': hp.choice('max_features', range(1,150)),
+                'n_estimators': hp.choice('n_estimators', range(100,500)),
+                'criterion': hp.choice('criterion', ["gini", "entropy"])}
             
             # Tune model using Hyperopt
             best = fmin(objective,
@@ -106,16 +108,26 @@ if __name__=="__main__":
 
             print(SparkTrials.results)
 
+            best_max_depth = best["n_estimators"]
             best_max_depth = best["max_depth"]
             best_max_features = best["max_features"]
+            best_criterion = best["criterion"]
         else:
+            best_n_estimators = default_n_estimators
             best_max_depth = default_max_depth
             best_max_features = default_max_features
+            best_criterion = default_criterion
 
         # Train model on entire training data
         pipeline = Pipeline([
             ('scaler', preprocessing.StandardScaler()), 
-            ('rf', RandomForestRegressor(max_depth=best_max_depth, max_features=best_max_features, random_state=random_state))
+            ('rf', RandomForestClassifier(
+                max_depth=best_max_depth, 
+                n_estimators=best_n_estimators,
+                max_features=best_max_features, 
+                criterion=best_criterion,
+                random_state=random_state, 
+                n_jobs=8))
             ])
         pipeline.fit(X_train, y_train)
 
@@ -123,6 +135,7 @@ if __name__=="__main__":
         r2 = pipeline.score(X_test, y_test)
         
         # Log param and metric for the final model
+        mlflow.log_param("n_estimators", best_n_estimators)
         mlflow.log_param("max_depth", best_max_depth)
         mlflow.log_param("max_features", best_max_features)
         mlflow.log_metric("loss", r2)
