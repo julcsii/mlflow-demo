@@ -143,7 +143,7 @@ if __name__=="__main__":
         mlflow.log_metric("loss", r2)
 
         # Log shap explanations
-        mlflow.shap.log_explanation(pipeline.predict, X_train)
+        mlflow.shap.log_explanation(pipeline.predict_proba, X_train)
 
         # Infer signature
         signature = mlflow.models.infer_signature(X_train, pipeline.predict(X_train))
