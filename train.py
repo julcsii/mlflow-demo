@@ -19,7 +19,8 @@ def create_spark_session():
     spark = SparkSession \
         .builder \
         .appName("MLflow demo app") \
-        .config("spark.jars.packages", "io.delta:delta-core_2.12:0.1.0") \
+        .config("spark.jars.packages", "io.delta:delta-core_2.12:0.8.0") \
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.driver.extraJavaOptions", "-Duser.timezone=UTC") \
         .config("spark.executor.extraJavaOptions", "-Duser.timezone=UTC") \
         .config("spark.sql.session.timeZone", "UTC") \
