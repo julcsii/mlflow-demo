@@ -28,15 +28,29 @@ ML Task: Random Forest based Regression to predict the quality of red wine given
 
 ## Run training 
 
-Locally
+### Locally 
+Train
 ```
 mlflow run . -e train --experiment-id 2712754460055773 -P data_file=data/winequality-red.csv
+```
+
+
+Train with hyperparam tuning
+```
+mlflow run . -e tune --experiment-id 2712754460055773 -P data_file=data/winequality-red.csv
 ```
 
 On Databicks
 
 Make sure to have any additional dependencies on the dbfs (that is not in your specified runtime).
 
+Train
+
+```
+mlflow run https://github.com/julcsii/mlflow-demo.git -e train --experiment-id 2712754460055773 -b databricks --backend-config new_cluster_spec.json -P data_file=dbfs:/FileStore/tables/winequality.delta
+```
+
+Train with hyperparam tuning
 ```
 mlflow run https://github.com/julcsii/mlflow-demo.git -e train --experiment-id 2712754460055773 -b databricks --backend-config new_cluster_spec.json -P data_file=dbfs:/FileStore/tables/winequality.delta
 ```
