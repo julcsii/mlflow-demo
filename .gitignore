@@ -130,3 +130,5 @@ dmypy.json
 
 *.csv
 .DS_Store
+
+*.delta
