@@ -25,6 +25,7 @@ def create_spark_session():
         .config("spark.sql.session.timeZone", "UTC") \
         .config("spark.driver.host", "localhost") \
         .getOrCreate()
+    import delta.tables  # needs to be imported after spark session is created
     return spark
 
 
