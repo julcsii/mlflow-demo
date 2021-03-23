@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 
 from hyperopt import hp, tpe, fmin, SparkTrials, STATUS_OK
- 
+from azureml.core import Workspace, Dataset
 
 def create_spark_session():
     spark = SparkSession \
@@ -55,9 +55,17 @@ if __name__=="__main__":
                           
     args = parser.parse_args()
 
-    # Track on MLflow managed by Databricks
-    mlflow.set_tracking_uri("databricks")
+    # Setup Azure ML studio workspace
+    ws = Workspace.from_config("azure_ml_config.json")
 
+    # Set tracking URL for mlflow
+    print(ws.get_mlflow_tracking_uri())
+    mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+
+    # Track on MLflow managed by Databricks
+    # mlflow.set_tracking_uri("databricks")
+    experiment_name = 'test_experiment_with_mlflow'
+    mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run() as run:
         # Parameters
@@ -70,6 +78,8 @@ if __name__=="__main__":
         # Load red wine data 
         if data_path.split(".")[-1]=="csv":
             data = pd.read_csv(data_path, sep=';')
+            # dataset = Dataset.get_by_name(ws, name='winequality-red')
+            # data = dataset.to_pandas_dataframe()
         elif data_path.split(".")[-1]=="delta":
             spark = create_spark_session()
             df = spark.read.format("delta").load(data_path)
