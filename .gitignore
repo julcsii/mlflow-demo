@@ -134,3 +134,5 @@ dmypy.json
 *.delta
 
 azure_ml_config.json
+mlruns/*
+AzureML/*

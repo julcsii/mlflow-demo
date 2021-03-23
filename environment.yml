@@ -18,3 +18,4 @@ dependencies:
     - azureml-core
     - azureml-dataprep[pandas]
     - azureml-mlflow
+    - matplotlib

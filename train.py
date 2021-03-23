@@ -55,17 +55,8 @@ if __name__=="__main__":
                           
     args = parser.parse_args()
 
-    # Setup Azure ML studio workspace
-    ws = Workspace.from_config("azure_ml_config.json")
-
-    # Set tracking URL for mlflow
-    print(ws.get_mlflow_tracking_uri())
-    mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
-
     # Track on MLflow managed by Databricks
     # mlflow.set_tracking_uri("databricks")
-    experiment_name = 'test_experiment_with_mlflow'
-    mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run() as run:
         # Parameters
@@ -153,7 +144,7 @@ if __name__=="__main__":
         mlflow.log_metric("loss", r2)
 
         # Log shap explanations
-        mlflow.shap.log_explanation(pipeline.predict_proba, X_train)
+        #  mlflow.shap.log_explanation(pipeline.predict_proba, X_train)
 
         # Infer signature
         signature = mlflow.models.infer_signature(X_train, pipeline.predict(X_train))
