@@ -40,7 +40,7 @@ Train with hyperparam tuning
 mlflow run . -e tune --experiment-id 2712754460055773 -P data_file=data/winequality-red.csv
 ```
 
-On Databicks
+### On Databicks
 
 Make sure to have any additional dependencies on the dbfs (that is not in your specified runtime).
 
